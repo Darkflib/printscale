@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "printscale"
+version = "0.1.0"
+description = "Upscale scanned photographs for large-format print, with measured grain restoration."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Mike Preston", email = "darkflib@gmail.com" }]
+keywords = ["super-resolution", "real-esrgan", "photography", "print", "upscaling"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: End Users/Desktop",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
+dependencies = [
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
+  "pillow>=10.0",
+  "torch>=2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.11",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.6",
+  "types-Pillow",
+]
+
+[project.scripts]
+printscale = "printscale.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/darkflib/printscale"
+Issues = "https://github.com/darkflib/printscale/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/printscale"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "ARG", "PTH", "RUF", "S"]
+ignore = [
+  "S101",    # assert is fine in tests and internal invariants
+  "PTH123",  # cv2/np take str paths happily
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG001", "ARG005", "S311", "S108"]
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/printscale", "tests"]
+strict = true
+warn_unreachable = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["cv2.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+  "slow: needs real model weights downloaded from the network",
+]

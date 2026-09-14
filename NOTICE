@@ -1,0 +1,28 @@
+printscale
+Copyright 2026 Mike Preston
+
+This product includes software developed from the following upstream projects.
+
+--------------------------------------------------------------------------------
+BasicSR  —  https://github.com/XPixelGroup/BasicSR
+Licensed under the Apache License, Version 2.0.
+
+The neural network architectures in src/printscale/arch.py (RRDBNet,
+ResidualDenseBlock, RRDB and SRVGGNetCompact) are a clean-room reimplementation
+that follows BasicSR's published architecture definitions closely enough to load
+its checkpoints with strict=True. They are treated here as a derivative work and
+this project is therefore licensed under the same Apache-2.0 terms.
+
+--------------------------------------------------------------------------------
+Real-ESRGAN  —  https://github.com/xinntao/Real-ESRGAN
+Licensed under the BSD 3-Clause License.
+
+The pretrained weights this tool downloads (RealESRGAN_x2plus, RealESRGAN_x4plus,
+realesr-general-x4v3 and realesr-general-wdn-x4v3) are published by that project
+and remain subject to its licence. They are NOT redistributed in this repository;
+`printscale weights` fetches them from the upstream GitHub release assets and
+verifies each against a pinned SHA-256 digest before use.
+
+Wang, X., Xie, L., Dong, C., Shan, Y.
+"Real-ESRGAN: Training Real-World Blind Super-Resolution with Pure Synthetic
+Data." ICCV Workshops, 2021.
