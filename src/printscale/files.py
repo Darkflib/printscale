@@ -31,12 +31,18 @@ def load_rgb(path: Path | str) -> Array:
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
 
 
-def stamp_dpi(path: Path, dpi: int) -> None:
-    """Write DPI metadata in place. Non-fatal if the format will not carry it."""
+def stamp_dpi(path: Path, dpi: int, **save_options: object) -> None:
+    """Write DPI metadata in place. Non-fatal if the format will not carry it.
+
+    Pillow has no way to edit a JPEG's metadata without re-encoding it, and it
+    defaults to quality 75 when re-saving. Callers writing a JPEG must pass the
+    same quality and subsampling they wrote it with, or the stamp quietly
+    throws away most of the file.
+    """
     try:
         with Image.open(path) as image:
             image.load()
-            image.save(path, dpi=(dpi, dpi))
+            image.save(path, dpi=(dpi, dpi), **save_options)  # type: ignore[arg-type]
     except (OSError, ValueError):
         LOG.warning("could not stamp DPI on %s", path.name, exc_info=True)
 
@@ -63,9 +69,9 @@ def save_master(gray: Array, path: Path, width_mm: float, *, compress: bool = Tr
     dpi = dpi_for_width(as_uint16.shape[1], width_mm)
 
     if compress:
-        Image.fromarray(as_uint16, mode="I;16").save(
-            path, compression="tiff_deflate", dpi=(dpi, dpi)
-        )
+        # No explicit mode: Pillow infers I;16 from uint16, and passing the
+        # mode is deprecated from Pillow 13.
+        Image.fromarray(as_uint16).save(path, compression="tiff_deflate", dpi=(dpi, dpi))
     else:
         cv2.imwrite(str(path), as_uint16)
         stamp_dpi(path, dpi)
@@ -92,7 +98,14 @@ def save_jpeg(gray: Array, path: Path, width_mm: float, quality: int = 97) -> Pa
         .astype(np.uint8)
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(path), as_uint8, [int(cv2.IMWRITE_JPEG_QUALITY), quality])
-    stamp_dpi(path, dpi_for_width(as_uint8.shape[1], width_mm))
+    # One write, through Pillow, so quality and DPI are set together. Writing
+    # with cv2 and then stamping would re-encode at Pillow's default quality.
+    Image.fromarray(as_uint8, mode="L").save(
+        path,
+        format="JPEG",
+        quality=quality,
+        subsampling=0,
+        dpi=(dpi_for_width(as_uint8.shape[1], width_mm),) * 2,
+    )
     LOG.info("wrote %s — %.1f MB", path.name, path.stat().st_size / 1e6)
     return path

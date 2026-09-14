@@ -54,3 +54,21 @@ def test_jpeg_preview_round_trips(tmp_path: Path) -> None:
 def test_load_rgb_reports_a_missing_file(tmp_path: Path) -> None:
     with pytest.raises(OSError, match="could not read"):
         load_rgb(tmp_path / "nope.png")
+
+
+def test_preview_is_not_silently_re_encoded(tmp_path: Path) -> None:
+    """Regression: stamping DPI through Pillow re-encodes at quality 75.
+
+    A detailed image written at quality 97 must stay close to the input. If the
+    DPI stamp round-trips the file at Pillow's default the error jumps and the
+    file shrinks by roughly a quarter.
+    """
+    rng = np.random.default_rng(5)
+    detail = rng.random((256, 256), dtype=np.float32) * 0.4 + 0.3
+    path = save_jpeg(detail, tmp_path / "detail.jpg", width_mm=100.0, quality=97)
+
+    with Image.open(path) as image:
+        assert image.info["dpi"][0] == pytest.approx(dpi_for_width(256, 100.0), abs=1)
+        reloaded = np.asarray(image.convert("L"), dtype=np.float32) / 255.0
+
+    assert float(np.abs(reloaded - detail).mean()) < 0.02
