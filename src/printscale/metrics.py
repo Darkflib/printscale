@@ -12,11 +12,12 @@ import logging
 
 import numpy as np
 
+from printscale._types import Array
+
 LOG = logging.getLogger(__name__)
 
 __all__ = ["clipping", "detect_crop", "ppi_table", "radial_psd", "seam_ratio"]
 
-Array = np.ndarray
 
 MM_PER_INCH = 25.4
 

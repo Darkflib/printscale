@@ -12,10 +12,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from printscale import Array
 from printscale.tiling import blend_window, tiled_apply
 
 
-def test_identity_reconstructs_exactly(smooth_rgb: np.ndarray) -> None:
+def test_identity_reconstructs_exactly(smooth_rgb: Array) -> None:
     """scale=1 with an identity callable must return the input unchanged."""
     out = tiled_apply(smooth_rgb, lambda patch: patch, 1, tile=64, overlap=8, progress_every=0)
     assert out.shape == smooth_rgb.shape
@@ -23,7 +24,7 @@ def test_identity_reconstructs_exactly(smooth_rgb: np.ndarray) -> None:
 
 
 @pytest.mark.parametrize(("tile", "overlap"), [(48, 4), (64, 16), (96, 24), (128, 32)])
-def test_identity_holds_across_geometries(smooth_rgb: np.ndarray, tile: int, overlap: int) -> None:
+def test_identity_holds_across_geometries(smooth_rgb: Array, tile: int, overlap: int) -> None:
     """Whatever the windows sum to, the divide must still reconstruct."""
     out = tiled_apply(smooth_rgb, lambda p: p, 1, tile=tile, overlap=overlap, progress_every=0)
     np.testing.assert_allclose(out, smooth_rgb, atol=1e-5)
@@ -47,10 +48,10 @@ def test_windows_are_not_a_partition_of_unity() -> None:
     assert interior.min() >= 1.0 - 1e-5
 
 
-def test_nearest_upsample_is_reconstructed(smooth_rgb: np.ndarray) -> None:
+def test_nearest_upsample_is_reconstructed(smooth_rgb: Array) -> None:
     """A deterministic x2 callable must survive tiling without seams."""
 
-    def double(patch: np.ndarray) -> np.ndarray:
+    def double(patch: Array) -> Array:
         return np.repeat(np.repeat(patch, 2, axis=0), 2, axis=1)
 
     reference = double(smooth_rgb)
@@ -60,14 +61,14 @@ def test_nearest_upsample_is_reconstructed(smooth_rgb: np.ndarray) -> None:
     assert float(np.abs(out - reference).max()) < 2e-3
 
 
-def test_rejects_bad_geometry(smooth_rgb: np.ndarray) -> None:
+def test_rejects_bad_geometry(smooth_rgb: Array) -> None:
     with pytest.raises(ValueError, match="must exceed"):
         tiled_apply(smooth_rgb, lambda p: p, 1, tile=32, overlap=16, progress_every=0)
     with pytest.raises(ValueError, match="HxWxC"):
         tiled_apply(smooth_rgb[..., 0], lambda p: p, 1, progress_every=0)
 
 
-def test_rejects_callable_with_wrong_scale(smooth_rgb: np.ndarray) -> None:
+def test_rejects_callable_with_wrong_scale(smooth_rgb: Array) -> None:
     """A callable that lies about its scale must fail loudly, not blend garbage."""
     with pytest.raises(ValueError, match="expected"):
         tiled_apply(smooth_rgb, lambda p: p, 2, tile=64, overlap=8, progress_every=0)

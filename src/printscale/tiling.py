@@ -28,11 +28,11 @@ from collections.abc import Callable
 
 import numpy as np
 
+from printscale._types import Array
+
 LOG = logging.getLogger(__name__)
 
 __all__ = ["blend_window", "tiled_apply"]
-
-Array = np.ndarray
 
 
 def _cosine_ramp(length: int, feather: int, *, lead: bool = True, trail: bool = True) -> Array:

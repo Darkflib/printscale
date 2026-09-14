@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import numpy as np
 
+from printscale import Array
 from printscale.pipeline import FinishParams, finish
 from printscale.tiling import tiled_apply
 
 
-def _fake_sr(patch: np.ndarray) -> np.ndarray:
+def _fake_sr(patch: Array) -> Array:
     """A deterministic, slightly smoothing x2 — stands in for the real model."""
     doubled = np.repeat(np.repeat(patch, 2, axis=0), 2, axis=1)
     kernel = np.array([0.25, 0.5, 0.25], dtype=np.float32)
@@ -20,7 +21,7 @@ def _fake_sr(patch: np.ndarray) -> np.ndarray:
 
 
 def test_finish_produces_a_printable_frame(
-    smooth_rgb: np.ndarray, grainy_gray: tuple[np.ndarray, float]
+    smooth_rgb: Array, grainy_gray: tuple[Array, float]
 ) -> None:
     source_gray, _sigma = grainy_gray
     small = smooth_rgb[:96, :96]
@@ -36,7 +37,7 @@ def test_finish_produces_a_printable_frame(
 
 
 def test_finish_with_grain_disabled_is_smoother(
-    smooth_rgb: np.ndarray, grainy_gray: tuple[np.ndarray, float]
+    smooth_rgb: Array, grainy_gray: tuple[Array, float]
 ) -> None:
     source_gray, _ = grainy_gray
     small = smooth_rgb[:96, :96]
@@ -47,9 +48,7 @@ def test_finish_with_grain_disabled_is_smoother(
     assert float(grained.std()) > float(plain.std())
 
 
-def test_finish_is_reproducible(
-    smooth_rgb: np.ndarray, grainy_gray: tuple[np.ndarray, float]
-) -> None:
+def test_finish_is_reproducible(smooth_rgb: Array, grainy_gray: tuple[Array, float]) -> None:
     source_gray, _ = grainy_gray
     small = smooth_rgb[:64, :64]
     upscaled = tiled_apply(small, _fake_sr, 2, tile=32, overlap=8, progress_every=0)

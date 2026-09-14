@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from printscale import Array
 from printscale.finishing import (
     add_grain,
     local_contrast,
@@ -14,7 +15,7 @@ from printscale.finishing import (
 )
 
 
-def test_measure_grain_recovers_known_sigma(grainy_gray: tuple[np.ndarray, float]) -> None:
+def test_measure_grain_recovers_known_sigma(grainy_gray: tuple[Array, float]) -> None:
     image, sigma = grainy_gray
     estimate = measure_grain(image)
     # The high-pass keeps most but not all of the noise power, so the estimate
@@ -55,7 +56,7 @@ def test_measure_grain_rejects_colour() -> None:
         measure_grain(np.zeros((16, 16, 3), dtype=np.float32))
 
 
-def test_add_grain_is_deterministic(smooth_rgb: np.ndarray) -> None:
+def test_add_grain_is_deterministic(smooth_rgb: Array) -> None:
     first = add_grain(smooth_rgb, 0.01, 2.0, seed=7)
     second = add_grain(smooth_rgb, 0.01, 2.0, seed=7)
     np.testing.assert_array_equal(first, second)
@@ -75,7 +76,7 @@ def test_add_grain_is_luminance_modulated() -> None:
             assert deviation < mid * 0.5, f"grain at {level} should be well below mid-grey"
 
 
-def test_add_grain_disabled_is_a_no_op(smooth_rgb: np.ndarray) -> None:
+def test_add_grain_disabled_is_a_no_op(smooth_rgb: Array) -> None:
     np.testing.assert_array_equal(add_grain(smooth_rgb, 0.01, 2.0, strength=0.0), smooth_rgb)
     np.testing.assert_array_equal(add_grain(smooth_rgb, 0.0, 2.0), smooth_rgb)
 
@@ -107,7 +108,7 @@ def test_sharpen_boosts_a_real_edge() -> None:
     assert float(np.abs(sharpened - field).max()) > 0.01
 
 
-def test_local_contrast_preserves_mean(smooth_rgb: np.ndarray) -> None:
+def test_local_contrast_preserves_mean(smooth_rgb: Array) -> None:
     lifted = local_contrast(smooth_rgb, 18.0, 0.16)
     assert float(abs(lifted.mean() - smooth_rgb.mean())) < 0.01
     assert lifted.min() >= 0.0

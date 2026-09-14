@@ -21,11 +21,11 @@ import logging
 import cv2
 import numpy as np
 
+from printscale._types import Array, as_float32
+
 LOG = logging.getLogger(__name__)
 
 __all__ = ["despeckle", "find_specks", "local_detail", "ring_detail"]
-
-Array = np.ndarray
 
 
 def local_detail(gray: Array, window: int = 21) -> Array:
@@ -43,7 +43,7 @@ def local_detail(gray: Array, window: int = 21) -> Array:
     values = gray.astype(np.float32)
     mean = cv2.boxFilter(values, -1, (window, window), normalize=True)
     mean_sq = cv2.boxFilter(values * values, -1, (window, window), normalize=True)
-    return np.sqrt(np.maximum(mean_sq - mean * mean, 0.0))
+    return as_float32(np.sqrt(np.maximum(mean_sq - mean * mean, 0.0)))
 
 
 def ring_detail(gray: Array, blob: Array, box: tuple[int, int, int, int], pad: int) -> float:

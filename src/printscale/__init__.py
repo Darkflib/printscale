@@ -10,6 +10,7 @@ from __future__ import annotations
 __version__ = "0.1.0"
 
 __all__ = [
+    "Array",
     "__version__",
     "add_grain",
     "despeckle",
@@ -19,6 +20,7 @@ __all__ = [
     "tiled_apply",
 ]
 
+from printscale._types import Array
 from printscale.despot import despeckle
 from printscale.finishing import add_grain, measure_grain
 from printscale.metrics import ppi_table

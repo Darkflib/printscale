@@ -5,6 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from printscale import Array
+
 
 @pytest.fixture
 def rng() -> np.random.Generator:
@@ -12,7 +14,7 @@ def rng() -> np.random.Generator:
 
 
 @pytest.fixture
-def smooth_rgb(rng: np.random.Generator) -> np.ndarray:
+def smooth_rgb(rng: np.random.Generator) -> Array:
     """A gently varying HxWx3 float32 image in [0, 1], no hard edges."""
     height, width = 200, 260
     yy, xx = np.mgrid[0:height, 0:width].astype(np.float32)
@@ -22,7 +24,7 @@ def smooth_rgb(rng: np.random.Generator) -> np.ndarray:
 
 
 @pytest.fixture
-def grainy_gray(rng: np.random.Generator) -> tuple[np.ndarray, float]:
+def grainy_gray(rng: np.random.Generator) -> tuple[Array, float]:
     """A flat-ish field with grain of a known sigma. Returns (image, sigma)."""
     sigma = 0.012
     height, width = 320, 320

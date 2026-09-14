@@ -5,10 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from printscale import Array
 from printscale.metrics import clipping, detect_crop, ppi_table, radial_psd, seam_ratio
 
 
-def test_seam_ratio_is_flat_on_a_clean_image(smooth_rgb: np.ndarray) -> None:
+def test_seam_ratio_is_flat_on_a_clean_image(smooth_rgb: Array) -> None:
     gray = (smooth_rgb[..., 0] * 255).astype(np.uint8)
     vertical, horizontal = seam_ratio(gray, period=64)
     assert vertical < 1.5
@@ -22,7 +23,7 @@ def test_seam_ratio_detects_planted_seams() -> None:
     assert vertical > 2.0
 
 
-def test_seam_ratio_handles_degenerate_period(smooth_rgb: np.ndarray) -> None:
+def test_seam_ratio_handles_degenerate_period(smooth_rgb: Array) -> None:
     gray = (smooth_rgb[..., 0] * 255).astype(np.uint8)
     assert seam_ratio(gray, period=0) == (1.0, 1.0)
     assert seam_ratio(gray, period=10_000) == (1.0, 1.0)

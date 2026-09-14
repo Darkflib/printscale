@@ -60,7 +60,9 @@ ignore = [
 "tests/*" = ["ARG001", "ARG005", "S311", "S108"]
 
 [tool.mypy]
-python_version = "3.10"
+# No python_version pin. mypy would then analyse third-party stubs as that
+# version too, and numpy's stubs use PEP 695 `type` statements that are a
+# syntax error below 3.12. Let it follow the interpreter it runs on.
 files = ["src/printscale", "tests"]
 strict = true
 warn_unreachable = true

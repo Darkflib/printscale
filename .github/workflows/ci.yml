@@ -31,31 +31,43 @@ jobs:
           enable-cache: true
           cache-dependency-glob: pyproject.toml
 
-      - name: Set up Python
-        run: uv python install ${{ matrix.python-version }}
-
-      # CPU wheels only. No test needs CUDA, and the GPU wheel is ~2 GB.
-      - name: Install
+      - name: Create the environment
         run: |
           uv venv --python ${{ matrix.python-version }}
+          # CPU wheels only. Nothing here needs CUDA and the GPU build pulls
+          # triton plus five nvidia-* wheels, roughly 3 GB per job.
           uv pip install torch --index-url https://download.pytorch.org/whl/cpu
           uv pip install -e ".[dev]"
 
+      # `uv run` re-syncs the project environment before running anything, which
+      # silently replaces the CPU wheel above with the default-index CUDA build.
+      # Call the tools out of .venv directly so the environment stays as built.
+      - name: Confirm the CPU build survived
+        run: |
+          .venv/bin/python - <<'PY'
+          import torch
+          assert torch.__version__.endswith("+cpu"), (
+              f"expected a CPU build, got {torch.__version__}. Something re-resolved "
+              "torch from the default index — check for a stray `uv run`."
+          )
+          print(torch.__version__)
+          PY
+
       - name: Lint
         run: |
-          uv run ruff check .
-          uv run ruff format --check .
+          .venv/bin/ruff check .
+          .venv/bin/ruff format --check .
 
       - name: Type check
-        run: uv run mypy
+        run: .venv/bin/mypy
 
       - name: Test
-        run: uv run pytest -q --cov=printscale --cov-report=term-missing
+        run: .venv/bin/pytest -q --cov=printscale --cov-report=term-missing
 
-      # The registry digests are the security boundary for weight downloads.
-      # Verify the pinned hashes still match what upstream publishes, but do not
-      # fail the build on a network hiccup.
+      # The pinned digests are the security boundary for weight downloads.
+      # Check they still match what upstream publishes, without failing the
+      # build on a network hiccup.
       - name: Verify pinned weight digests
         if: matrix.python-version == '3.12'
         continue-on-error: true
-        run: uv run printscale weights --fetch general-x4v3
+        run: .venv/bin/printscale weights --fetch general-x4v3

@@ -12,10 +12,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from printscale import Array
 from printscale.despot import despeckle, find_specks, local_detail
 
 
-def _field_with_dust(seed: int = 0) -> tuple[np.ndarray, list[tuple[int, int]]]:
+def _field_with_dust(seed: int = 0) -> tuple[Array, list[tuple[int, int]]]:
     """A dark flat field with small bright specks at known positions."""
     rng = np.random.default_rng(seed)
     image = np.full((256, 256), 40, dtype=np.uint8)
@@ -26,7 +27,7 @@ def _field_with_dust(seed: int = 0) -> tuple[np.ndarray, list[tuple[int, int]]]:
     return image, positions
 
 
-def _hairs(seed: int = 1) -> np.ndarray:
+def _hairs(seed: int = 1) -> Array:
     """A busy dark region full of thin bright strokes — a stand-in for hair."""
     rng = np.random.default_rng(seed)
     image = np.full((256, 256), 30, dtype=np.uint8)

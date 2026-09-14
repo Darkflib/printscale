@@ -12,6 +12,7 @@ import numpy as np
 import torch
 
 from printscale import finishing
+from printscale._types import Array
 from printscale.despot import despeckle
 from printscale.models import WEIGHTS, load_model
 from printscale.tiling import tiled_apply
@@ -19,8 +20,6 @@ from printscale.tiling import tiled_apply
 LOG = logging.getLogger(__name__)
 
 __all__ = ["BakeResult", "FinishParams", "bake_off", "finish", "upscale"]
-
-Array = np.ndarray
 
 
 @dataclass

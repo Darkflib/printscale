@@ -123,10 +123,19 @@ from the upstream Real-ESRGAN release assets over HTTPS.
 ## Development
 
 ```bash
-uv run ruff check . && uv run ruff format --check .
-uv run mypy
-uv run pytest
+uv venv
+uv pip install torch --index-url https://download.pytorch.org/whl/cpu  # or drop --index-url for CUDA
+uv pip install -e ".[dev]"
+
+.venv/bin/ruff check . && .venv/bin/ruff format --check .
+.venv/bin/mypy
+.venv/bin/pytest
 ```
+
+Call the tools out of `.venv` rather than through `uv run`. `uv run` re-syncs the
+project environment first, which re-resolves `torch` against the default index —
+so a CPU install becomes a 3 GB CUDA download, every time. `uv run --no-sync`
+also works if you prefer it.
 
 No test needs the network or a real photograph; every fixture is synthetic.
 

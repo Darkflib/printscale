@@ -14,13 +14,12 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from printscale._types import Array
 from printscale.metrics import MM_PER_INCH
 
 LOG = logging.getLogger(__name__)
 
 __all__ = ["dpi_for_width", "load_rgb", "save_jpeg", "save_master", "stamp_dpi"]
-
-Array = np.ndarray
 
 
 def load_rgb(path: Path | str) -> Array:

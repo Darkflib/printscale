@@ -14,10 +14,11 @@ stage 2 deliberately put grain back and an ungated sharpen would amplify it.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 import cv2
 import numpy as np
+
+from printscale._types import Array, as_float32
 
 LOG = logging.getLogger(__name__)
 
@@ -29,27 +30,16 @@ __all__ = [
     "to_neutral_gray",
 ]
 
-Array = np.ndarray
 
 # Rec. 709 luma coefficients, applied to linear-ish sRGB values. Good enough for
 # collapsing a monochrome scan's paper cast; not a colorimetric conversion.
 _LUMA = (0.2126, 0.7152, 0.0722)
 
 
-def _f32(array: Any) -> Array:
-    """Pin an OpenCV result to float32.
-
-    cv2 returns a loosely typed array whose dtype depends on the input. Every
-    stage here assumes float32 in [0, 1]; making that explicit at the boundary
-    keeps a stray float64 from silently doubling memory on a 16-megapixel frame.
-    """
-    return np.asarray(array, dtype=np.float32)
-
-
 def to_neutral_gray(rgb: Array) -> Array:
     """Collapse a 3-channel image to neutral grey, returned still 3-channel."""
     luma = _LUMA[0] * rgb[..., 0] + _LUMA[1] * rgb[..., 1] + _LUMA[2] * rgb[..., 2]
-    return _f32(np.repeat(luma[..., None], 3, axis=2))
+    return as_float32(np.repeat(luma[..., None], 3, axis=2))
 
 
 def measure_grain(gray: Array, *, samples: int = 320, patch: int = 24, seed: int = 0) -> float:
@@ -79,7 +69,7 @@ def measure_grain(gray: Array, *, samples: int = 320, patch: int = 24, seed: int
         y = int(rng.integers(0, height - patch + 1))
         x = int(rng.integers(0, width - patch + 1))
         block = gray[y : y + patch, x : x + patch]
-        high_pass = block - _f32(cv2.GaussianBlur(block, (0, 0), 2.0))
+        high_pass = block - as_float32(cv2.GaussianBlur(block, (0, 0), 2.0))
         sigmas.append(float(high_pass.std()))
 
     sigmas.sort()
@@ -114,20 +104,20 @@ def add_grain(
     height, width, _ = rgb.shape
     rng = np.random.default_rng(seed)
     noise = rng.standard_normal((height, width), dtype=np.float32)
-    noise = _f32(cv2.GaussianBlur(noise, (0, 0), max(0.5, 0.45 * scale)))
+    noise = as_float32(cv2.GaussianBlur(noise, (0, 0), max(0.5, 0.45 * scale)))
     noise /= max(float(noise.std()), 1e-6)
 
     luma = rgb.mean(axis=2)
     weight = np.clip(1.0 - np.abs(luma - 0.5) * 2.0, 0.0, 1.0) ** 0.6
-    return _f32(np.clip(rgb + (noise * weight * (sigma * strength))[..., None], 0.0, 1.0))
+    return as_float32(np.clip(rgb + (noise * weight * (sigma * strength))[..., None], 0.0, 1.0))
 
 
 def local_contrast(rgb: Array, radius: float = 18.0, amount: float = 0.16) -> Array:
     """Large-radius, low-amount unsharp. Adds presence without haloing edges."""
     if amount <= 0 or radius <= 0:
         return rgb
-    blurred = _f32(cv2.GaussianBlur(rgb, (0, 0), radius))
-    return _f32(np.clip(rgb + (rgb - blurred) * amount, 0.0, 1.0))
+    blurred = as_float32(cv2.GaussianBlur(rgb, (0, 0), radius))
+    return as_float32(np.clip(rgb + (rgb - blurred) * amount, 0.0, 1.0))
 
 
 def print_sharpen(
@@ -144,8 +134,8 @@ def print_sharpen(
     """
     if amount <= 0 or radius <= 0:
         return rgb
-    blurred = _f32(cv2.GaussianBlur(rgb, (0, 0), radius))
+    blurred = as_float32(cv2.GaussianBlur(rgb, (0, 0), radius))
     detail = rgb - blurred
     gate = (np.abs(detail) > threshold).astype(np.float32)
-    gate = _f32(cv2.GaussianBlur(gate, (0, 0), radius * 0.7))
-    return _f32(np.clip(rgb + detail * amount * gate, 0.0, 1.0))
+    gate = as_float32(cv2.GaussianBlur(gate, (0, 0), radius * 0.7))
+    return as_float32(np.clip(rgb + detail * amount * gate, 0.0, 1.0))
